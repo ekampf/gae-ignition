@@ -16,6 +16,11 @@ from ignition import *
 def index(request):
     return 'App Engine Ignited!'
 
+@get('/json')
+@content_type('application/json')
+def example_json(request):
+    return '{ "value": 200, "message" : "Hello world!" }'
+
 def main():
     run()
 

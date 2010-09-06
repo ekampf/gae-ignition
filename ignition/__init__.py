@@ -320,8 +320,33 @@ def head(url=None):   return route(url, 'head')
 def put(url=None):    return route(url, 'put')
 def delete(url=None): return route(url, 'delete')
 
+# Misc. Helpers
+#########################################################
+
 def halt(code, explanation=None, header=None):
     Ignition.instance.jalt(code, explanation=explanation, header=header)
+
+def content_type(content_type):
+    def decorator(view_function):
+        def wrapper(*args, **kwargs):
+            result = view_function(*args, **kwargs)
+
+            if isinstance(result, basestring):
+                response = Ignition.response_class()
+                response.content_type = content_type
+                response.body = result
+                return response
+
+            if isinstance(result, Ignition.response_class):
+                result.content_type = content_type
+                return result
+
+            # If view didn't return a string then we have nothing to do here
+            return result
+
+        return wrapper
+    return decorator
+
 
 def make_wsgi_app(config=None, **kwargs):
     """Returns an instance of :class:'Ignition'.
