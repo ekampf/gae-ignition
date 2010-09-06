@@ -10,7 +10,7 @@ import os
 import sys
 import warnings
 
-#import webob
+import webob
 from wsgiref.handlers import CGIHandler
 
 __version__ = "0.1"
@@ -46,11 +46,41 @@ class Ignition(object):
         self.debug = debug
         self.routes = []
 
-    def __call(self, environ, start_response):
+    def __call__(self, environ, start_response):
         return self.wsgi_app(environ, start_response)
 
-    def wsgi_app(environ, start_response):
-        pass
+    def wsgi_app(self, environ, start_response):
+        environ['ignition.app'] = self
+
+        request = webob.Request(environ)
+        response = webob.Response(request=request, conditional_response=True)
+
+        if request.method not in ALLOWED_METHODS:
+            #abort(501)
+            pass
+
+        try:
+            route = self.match_route(request)
+            if not route:
+                logging.error("404")
+                pass
+
+
+            result = route.dispatch(request)
+
+            response.content_type = 'text/plain'
+            response.body_file.write(result)
+            return response(environ, start_response)
+
+        except Exception, e:
+            logging.exception("Failure")
+
+    def match_route(self, request):
+        for r in self.routes:
+            if r.match(request.path, request.method):
+                return r
+
+        return None
 
     def route(self, url, func, method):
         """Attaches a view function to a url or a list of urls"""
@@ -87,7 +117,7 @@ class IgnitionRoute(object):
 
     def match(self, request_uri, method):
         """Matches a given request uri to this route object"""
-        result = self.url.match(request)
+        result = self.url.match(request_uri)
         if result is None:
             return False
 
@@ -133,6 +163,9 @@ class IgnitionRoute(object):
 
 # Functions that handle the global Ignition singleton
 #########################################################
+
+_ignition = None
+
 def init(config=None):
     """Sets up the global Ignition singleton variable"""
     global _ignition
@@ -160,7 +193,7 @@ def route(url=None, method='*'):
     def wrap(f):
         _ignition.route(url, f, method)
 
-        return wrap
+    return wrap
 
 def post(url=None):   return route(url, 'post')
 def get(url=None):    return route(url, 'get')

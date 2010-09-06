@@ -7,7 +7,7 @@ derived_file_type:
 - python_precompiled
 
 handlers:
-- url: /(robots\.txt|favicon\.ico)
+- url: /(robots\.txt)
   static_files: static/\1
   upload: static/(.*)
 

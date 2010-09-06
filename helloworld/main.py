@@ -13,7 +13,7 @@ debug = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 from ignition import *
 
 @route('/')
-def index(web):
+def index(request):
     return 'App Engine Ignited!'
 
 def main():
