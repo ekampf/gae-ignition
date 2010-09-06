@@ -26,9 +26,11 @@ ALLOWED_METHODS = frozenset(['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 
 class IgnitionException(Exception):
     pass
 
+class Request(webob.Request):
+    pass
 
-
-
+class Response(webob.Response):
+    pass
 
 class Config(dict):
     pass
@@ -36,12 +38,19 @@ class Config(dict):
 class Ignition(object):
     """The Ignition main WSGI application"""
 
+    #: Default class for requests.
+    request_class = Request
+    #: Default class for responses.
+    response_class = Response
+    #: The active :class:`Ignition` instance.
+    instance = None
+    #: The active :class:`Request` instance.
+    request = None
+
     def __init__(self, config=None, debug=False):
-        global _ignition
-        if _ignition is not None:
-            logging.warning("There's already an Ignition global object created! creating another might cause weird behavior")
-        else:
-            _ignition = self
+        if not Ignition.instance == None :
+            raise RuntimeError, 'Only one instance of TestSingleton is allowed!'
+        Ignition.instance = self
 
         self.debug = debug
         self.routes = []
@@ -89,15 +98,15 @@ class Ignition(object):
             url = '/' + func.__name__ + '/'
 
         if type(url) == str:
-            self.routes.append(IgnitionRoute(url, func, method))
+            self.routes.append(Route(url, func, method))
         else:
             for u in url:
-                self.routes.append(IgnitionRoute(u, func, method))
+                self.routes.append(Route(u, func, method))
 
     def run(self):
         CGIHandler().run(self)
 
-class IgnitionRoute(object):
+class Route(object):
     url_syntax = re.compile(r'''\{(\w+)(?::([^}]+))?\}''', re.VERBOSE)
 
     def __init__(self, url, func, method):
@@ -107,7 +116,7 @@ class IgnitionRoute(object):
         self.str_url = url
 
         # Convert the uri to a regular expression
-        regex = IgnitionRoute.template_to_regex(url)
+        regex = Route.template_to_regex(url)
 
         self.url = re.compile(regex)
         self.func = func
@@ -133,7 +142,7 @@ class IgnitionRoute(object):
         return self.func(request, **self.params)
 
     def __repr__(self):
-        return '<IgnitionRoute: %s %s - %s()>' % (self.method, self.str_url, self.func.__name__)
+        return '<Route: %s %s - %s()>' % (self.method, self.str_url, self.func.__name__)
 
     @classmethod
     def template_to_regex(cls, template):
@@ -164,34 +173,30 @@ class IgnitionRoute(object):
 # Functions that handle the global Ignition singleton
 #########################################################
 
-_ignition = None
-
 def init(config=None):
     """Sets up the global Ignition singleton variable"""
-    global _ignition
-    if _ignition is None:
+    if Ignition.instance is None:
         # Create a new instance of Ignition if it wasnt already created
-        _ignition = Ignition(config)
+        app = Ignition(config)
 
-    return _ignition
+    return Ignition.instance
 
 def run():
-    if _ignition is None:
+    if Ignition.instance is None:
         init()
 
-    _ignition.run()
+    Ignition.instance.run()
 
 
 # Decorators to add routing semantics to view functions
 #########################################################
 
 def route(url=None, method='*'):
-    global _ignition
-    if _ignition is None:
+    if Ignition.instance is None:
         init()
 
     def wrap(f):
-        _ignition.route(url, f, method)
+        Ignition.instance.route(url, f, method)
 
     return wrap
 
