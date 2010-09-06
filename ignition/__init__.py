@@ -144,7 +144,7 @@ class Ignition(object):
         lines = ''.join(traceback.format_exception(*sys.exc_info()))
         return webob.exc.HTTPInternalServerError(detail='%s' % lines)
 
-    def halt(self, code, explanation=None, headers=None):
+    def halt(self, code=None, explanation=None, headers=None):
         exception_classes = {
             # Client errors
             400 : webob.exc.HTTPBadRequest,
@@ -323,7 +323,7 @@ def delete(url=None): return route(url, 'delete')
 # Misc. Helpers
 #########################################################
 
-def halt(code, explanation=None, header=None):
+def halt(code=None, explanation=None, header=None):
     Ignition.instance.jalt(code, explanation=explanation, header=header)
 
 def content_type(content_type):
