@@ -6,4 +6,18 @@ Ignite your Google AppEngine project with GAE-Ignition.
 Ignition is a small but powerful web framework inspired by Ruby's Sinatra and developed specifically
 for use with Google AppEngine.
 
+Repository: [http://github.com/ekampf/gae-ignition](GitHub)
+
+## Igniting your App Engine App
+
+Simple hello world:
+
+    from ignition import *
+
+    @route('/')
+    def index(request):
+        "Hello World!"
+
+    run()
+
 ## Changelog
