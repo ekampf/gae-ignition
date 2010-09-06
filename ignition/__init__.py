@@ -69,11 +69,11 @@ class Ignition(object):
 
              # Make sure that the requested method is allowed in App Engine.
             if request.method not in ALLOWED_METHODS:
-                self.halt(501) # raise webob.exec.HTTPNotImplemented()
+                self.halt(code=501) # raise webob.exec.HTTPNotImplemented()
 
             matched_route = self.match_route(request)
             if not matched_route:
-                self.halt(404)
+                self.halt(code=404)
 
             # TODO: Pre-dispatch filters
 
